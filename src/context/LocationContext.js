@@ -8,147 +8,155 @@ export const useLocation = () => useContext(LocationContext);
 
 export const LocationProvider = ({ children }) => {
   const { user } = useAuth();
-  const [locationProfile, setLocationProfile] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [locationRecord, setLocationRecord] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchLocationProfile = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     if (!user?.id) {
-      setLocationProfile(null);
+      setUserProfile(null);
+      setLocationRecord(null);
       setLoading(false);
       return;
     }
 
     try {
-      const { data, error } = await supabase
+      // Fetch user profile
+      const { data: userData, error: userError } = await supabase
         .from('users')
-        .select(`
-          id,
-          auth_id,
-          email,
-          first_name,
-          last_name,
-          is_location,
-          location_intake_completed,
-          location_request_submitted_at,
-          location_request_updated_at,
-          location_approved,
-          location_approved_at,
-          location_rejected,
-          location_rejected_at,
-          location_rejection_reason,
-          location_contract_agreed,
-          location_contract_agreed_at,
-          location_business_name,
-          location_business_phone,
-          location_business_address,
-          location_business_city,
-          location_business_state,
-          location_business_zip,
-          location_business_website,
-          location_business_description,
-          location_subscription_tier,
-          location_data
-        `)
+        .select('id, auth_id, email, first_name, last_name, is_location, location_id')
         .eq('auth_id', user.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching location profile:', error);
+      if (userError && userError.code !== 'PGRST116') {
+        console.error('Error fetching user:', userError);
       }
 
-      setLocationProfile(data || null);
+      setUserProfile(userData || null);
+
+      // If user has a location_id, fetch that location record
+      if (userData?.location_id) {
+        const { data: locData, error: locError } = await supabase
+          .from('locations')
+          .select('*')
+          .eq('id', userData.location_id)
+          .single();
+
+        if (locError && locError.code !== 'PGRST116') {
+          console.error('Error fetching location:', locError);
+        }
+
+        setLocationRecord(locData || null);
+      } else {
+        setLocationRecord(null);
+      }
     } catch (err) {
-      console.error('Error in fetchLocationProfile:', err);
+      console.error('Error in fetchData:', err);
     } finally {
       setLoading(false);
     }
   }, [user?.id]);
 
   useEffect(() => {
-    fetchLocationProfile();
-  }, [fetchLocationProfile]);
+    fetchData();
+  }, [fetchData]);
 
   // Status checks
-  const needsIntake = !locationProfile?.location_intake_completed;
-  const isPending = locationProfile?.location_intake_completed &&
-                    !locationProfile?.location_approved &&
-                    !locationProfile?.location_rejected;
-  const isApproved = locationProfile?.location_approved === true;
-  const isRejected = locationProfile?.location_rejected === true;
+  const needsIntake = !locationRecord; // No location record = needs to submit application
+  const isPending = locationRecord && !locationRecord.verified;
+  const isApproved = locationRecord?.verified === true;
 
-  // Submit initial application
+  // Submit initial application - creates record in locations table
   const submitApplication = async (applicationData) => {
     if (!user?.id) return { error: 'No user' };
 
     const now = new Date().toISOString();
 
-    const { error } = await supabase
+    // 1. Create location record
+    const { data: newLocation, error: locError } = await supabase
+      .from('locations')
+      .insert({
+        store_name: applicationData.businessName,
+        phone: applicationData.businessPhone,
+        address: applicationData.businessAddress,
+        city: applicationData.businessCity,
+        state: applicationData.businessState,
+        zip_code: applicationData.businessZip,
+        website: applicationData.businessWebsite,
+        description: applicationData.businessDescription,
+        owner_id: user.id,
+        verified: false,
+        submitted_at: now,
+        application_updated_at: now,
+        source: 'partner',
+        subscription_tier: 1,
+        subscription_status: 'pending',
+      })
+      .select()
+      .single();
+
+    if (locError) {
+      console.error('Error creating location:', locError);
+      return { error: locError };
+    }
+
+    // 2. Update user with is_location flag and location_id
+    const { error: userError } = await supabase
       .from('users')
       .upsert({
         auth_id: user.id,
         email: user.email,
         is_location: true,
-        location_intake_completed: true,
-        location_request_submitted_at: now,
-        location_request_updated_at: now,
-        location_approved: false,
-        location_rejected: false,
-        location_business_name: applicationData.businessName,
-        location_business_phone: applicationData.businessPhone,
-        location_business_address: applicationData.businessAddress,
-        location_business_city: applicationData.businessCity,
-        location_business_state: applicationData.businessState,
-        location_business_zip: applicationData.businessZip,
-        location_business_website: applicationData.businessWebsite,
-        location_business_description: applicationData.businessDescription,
-        location_subscription_tier: 'free',
+        location_id: newLocation.id,
       }, { onConflict: 'auth_id' });
 
-    if (!error) {
-      await fetchLocationProfile();
+    if (userError) {
+      console.error('Error updating user:', userError);
+      return { error: userError };
     }
 
-    return { error };
+    await fetchData();
+    return { error: null };
   };
 
   // Update existing application (doesn't change submitted_at)
   const updateApplication = async (applicationData) => {
-    if (!user?.id) return { error: 'No user' };
+    if (!locationRecord?.id) return { error: 'No location record' };
 
     const { error } = await supabase
-      .from('users')
+      .from('locations')
       .update({
-        location_request_updated_at: new Date().toISOString(),
-        location_business_name: applicationData.businessName,
-        location_business_phone: applicationData.businessPhone,
-        location_business_address: applicationData.businessAddress,
-        location_business_city: applicationData.businessCity,
-        location_business_state: applicationData.businessState,
-        location_business_zip: applicationData.businessZip,
-        location_business_website: applicationData.businessWebsite,
-        location_business_description: applicationData.businessDescription,
+        store_name: applicationData.businessName,
+        phone: applicationData.businessPhone,
+        address: applicationData.businessAddress,
+        city: applicationData.businessCity,
+        state: applicationData.businessState,
+        zip_code: applicationData.businessZip,
+        website: applicationData.businessWebsite,
+        description: applicationData.businessDescription,
+        application_updated_at: new Date().toISOString(),
       })
-      .eq('auth_id', user.id);
+      .eq('id', locationRecord.id);
 
     if (!error) {
-      await fetchLocationProfile();
+      await fetchData();
     }
 
     return { error };
   };
 
   const value = {
-    locationProfile,
+    userProfile,
+    locationRecord,
     loading,
     // Status flags
     needsIntake,
     isPending,
     isApproved,
-    isRejected,
     // Actions
     submitApplication,
     updateApplication,
-    refreshProfile: fetchLocationProfile,
+    refreshData: fetchData,
   };
 
   return (

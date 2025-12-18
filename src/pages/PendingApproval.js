@@ -7,7 +7,7 @@ import logo from '../assets/logo.png';
 
 const PendingApproval = () => {
   const navigate = useNavigate();
-  const { locationProfile, updateApplication, refreshProfile } = useLocation();
+  const { locationRecord, updateApplication, refreshData } = useLocation();
   const { signOut } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -27,19 +27,19 @@ const PendingApproval = () => {
 
   // Populate form with existing data
   useEffect(() => {
-    if (locationProfile) {
+    if (locationRecord) {
       setFormData({
-        businessName: locationProfile.location_business_name || '',
-        businessPhone: locationProfile.location_business_phone || '',
-        businessAddress: locationProfile.location_business_address || '',
-        businessCity: locationProfile.location_business_city || '',
-        businessState: locationProfile.location_business_state || '',
-        businessZip: locationProfile.location_business_zip || '',
-        businessWebsite: locationProfile.location_business_website || '',
-        businessDescription: locationProfile.location_business_description || '',
+        businessName: locationRecord.store_name || '',
+        businessPhone: locationRecord.phone || '',
+        businessAddress: locationRecord.address || '',
+        businessCity: locationRecord.city || '',
+        businessState: locationRecord.state || '',
+        businessZip: locationRecord.zip_code || '',
+        businessWebsite: locationRecord.website || '',
+        businessDescription: locationRecord.description || '',
       });
     }
-  }, [locationProfile]);
+  }, [locationRecord]);
 
   const handleChange = (field) => (e) => {
     setFormData(prev => ({ ...prev, [field]: e.target.value }));
@@ -79,16 +79,16 @@ const PendingApproval = () => {
 
   const handleCancel = () => {
     // Reset form to original values
-    if (locationProfile) {
+    if (locationRecord) {
       setFormData({
-        businessName: locationProfile.location_business_name || '',
-        businessPhone: locationProfile.location_business_phone || '',
-        businessAddress: locationProfile.location_business_address || '',
-        businessCity: locationProfile.location_business_city || '',
-        businessState: locationProfile.location_business_state || '',
-        businessZip: locationProfile.location_business_zip || '',
-        businessWebsite: locationProfile.location_business_website || '',
-        businessDescription: locationProfile.location_business_description || '',
+        businessName: locationRecord.store_name || '',
+        businessPhone: locationRecord.phone || '',
+        businessAddress: locationRecord.address || '',
+        businessCity: locationRecord.city || '',
+        businessState: locationRecord.state || '',
+        businessZip: locationRecord.zip_code || '',
+        businessWebsite: locationRecord.website || '',
+        businessDescription: locationRecord.description || '',
       });
     }
     setIsEditing(false);
@@ -135,15 +135,15 @@ const PendingApproval = () => {
           <div style={styles.timestamp}>
             <span style={styles.timestampLabel}>Submitted</span>
             <span style={styles.timestampValue}>
-              {formatDate(locationProfile?.location_request_submitted_at)}
+              {formatDate(locationRecord?.submitted_at)}
             </span>
           </div>
-          {locationProfile?.location_request_updated_at &&
-           locationProfile?.location_request_updated_at !== locationProfile?.location_request_submitted_at && (
+          {locationRecord?.application_updated_at &&
+           locationRecord?.application_updated_at !== locationRecord?.submitted_at && (
             <div style={styles.timestamp}>
               <span style={styles.timestampLabel}>Last Updated</span>
               <span style={styles.timestampValue}>
-                {formatDate(locationProfile?.location_request_updated_at)}
+                {formatDate(locationRecord?.application_updated_at)}
               </span>
             </div>
           )}
@@ -279,37 +279,37 @@ const PendingApproval = () => {
             <div style={styles.infoCard}>
               <div style={styles.infoRow}>
                 <Store size={18} color="#94a3b8" />
-                <span style={styles.businessName}>{locationProfile?.location_business_name}</span>
+                <span style={styles.businessName}>{locationRecord?.store_name}</span>
               </div>
-              {locationProfile?.location_business_phone && (
+              {locationRecord?.phone && (
                 <div style={styles.infoItem}>
                   <span style={styles.infoLabel}>Phone:</span>
-                  <span style={styles.infoValue}>{locationProfile.location_business_phone}</span>
+                  <span style={styles.infoValue}>{locationRecord.phone}</span>
                 </div>
               )}
-              {(locationProfile?.location_business_address || locationProfile?.location_business_city) && (
+              {(locationRecord?.address || locationRecord?.city) && (
                 <div style={styles.infoItem}>
                   <span style={styles.infoLabel}>Address:</span>
                   <span style={styles.infoValue}>
                     {[
-                      locationProfile.location_business_address,
-                      locationProfile.location_business_city,
-                      locationProfile.location_business_state,
-                      locationProfile.location_business_zip
+                      locationRecord.address,
+                      locationRecord.city,
+                      locationRecord.state,
+                      locationRecord.zip_code
                     ].filter(Boolean).join(', ')}
                   </span>
                 </div>
               )}
-              {locationProfile?.location_business_website && (
+              {locationRecord?.website && (
                 <div style={styles.infoItem}>
                   <span style={styles.infoLabel}>Website:</span>
-                  <span style={styles.infoValue}>{locationProfile.location_business_website}</span>
+                  <span style={styles.infoValue}>{locationRecord.website}</span>
                 </div>
               )}
-              {locationProfile?.location_business_description && (
+              {locationRecord?.description && (
                 <div style={styles.infoItem}>
                   <span style={styles.infoLabel}>About:</span>
-                  <span style={styles.infoValue}>{locationProfile.location_business_description}</span>
+                  <span style={styles.infoValue}>{locationRecord.description}</span>
                 </div>
               )}
             </div>

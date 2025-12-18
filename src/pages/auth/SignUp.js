@@ -47,8 +47,7 @@ const SignUp = () => {
       return;
     }
 
-    // Set location-specific fields (doesn't touch app fields)
-    // Uses ONLY location_* fields so app intake/contract fields stay intact
+    // Mark user as location owner (business details go in locations table on intake)
     if (data?.user) {
       const { error: upsertError } = await supabase
         .from('users')
@@ -56,14 +55,10 @@ const SignUp = () => {
           auth_id: data.user.id,
           email: data.user.email,
           is_location: true,
-          location_intake_completed: false,
-          location_approved: false,
-          location_contract_agreed: false,
-          location_subscription_tier: 'free',
         }, { onConflict: 'auth_id' });
 
       if (upsertError) {
-        console.error('Error setting location flags:', upsertError);
+        console.error('Error setting location flag:', upsertError);
       }
     }
 
