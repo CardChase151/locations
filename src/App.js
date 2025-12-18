@@ -5,6 +5,7 @@ import Login from './pages/auth/Login';
 import SignUp from './pages/auth/SignUp';
 import Dashboard from './pages/Dashboard';
 import IntakeForm from './pages/IntakeForm';
+import PendingApproval from './pages/PendingApproval';
 
 // Loading spinner component
 const LoadingScreen = () => (
@@ -31,10 +32,10 @@ const LoadingScreen = () => (
   </div>
 );
 
-// Protected Route - requires auth AND completed intake
+// Protected Route - requires auth AND approved status
 const ProtectedRoute = ({ children }) => {
   const { user, loading: authLoading } = useAuth();
-  const { needsIntake, loading: locationLoading } = useLocation();
+  const { needsIntake, isPending, isApproved, loading: locationLoading } = useLocation();
 
   if (authLoading || locationLoading) {
     return <LoadingScreen />;
@@ -47,6 +48,16 @@ const ProtectedRoute = ({ children }) => {
   // If user needs to complete intake, redirect to intake form
   if (needsIntake) {
     return <Navigate to="/intake" replace />;
+  }
+
+  // If user is pending approval, redirect to pending page
+  if (isPending) {
+    return <Navigate to="/pending" replace />;
+  }
+
+  // Only approved users can access dashboard
+  if (!isApproved) {
+    return <Navigate to="/pending" replace />;
   }
 
   return children;
@@ -65,8 +76,34 @@ const IntakeRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // If user already completed intake, go to dashboard
+  // If user already completed intake, go to pending or dashboard
   if (!needsIntake) {
+    return <Navigate to="/pending" replace />;
+  }
+
+  return children;
+};
+
+// Pending Route - requires auth AND completed intake but NOT approved
+const PendingRoute = ({ children }) => {
+  const { user, loading: authLoading } = useAuth();
+  const { needsIntake, isPending, isApproved, loading: locationLoading } = useLocation();
+
+  if (authLoading || locationLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // If user needs intake, go to intake
+  if (needsIntake) {
+    return <Navigate to="/intake" replace />;
+  }
+
+  // If user is approved, go to dashboard
+  if (isApproved) {
     return <Navigate to="/" replace />;
   }
 
@@ -76,7 +113,7 @@ const IntakeRoute = ({ children }) => {
 // Public Route - redirects to appropriate page if already logged in
 const PublicRoute = ({ children }) => {
   const { user, loading: authLoading } = useAuth();
-  const { needsIntake, loading: locationLoading } = useLocation();
+  const { needsIntake, isPending, isApproved, loading: locationLoading } = useLocation();
 
   if (authLoading) {
     return <LoadingScreen />;
@@ -88,11 +125,18 @@ const PublicRoute = ({ children }) => {
       return <LoadingScreen />;
     }
 
-    // Route based on intake status
+    // Route based on status
     if (needsIntake) {
       return <Navigate to="/intake" replace />;
     }
-    return <Navigate to="/" replace />;
+    if (isPending) {
+      return <Navigate to="/pending" replace />;
+    }
+    if (isApproved) {
+      return <Navigate to="/" replace />;
+    }
+    // Default to pending if none match
+    return <Navigate to="/pending" replace />;
   }
 
   return children;
@@ -130,7 +174,17 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Protected routes - auth required, intake completed */}
+      {/* Pending route - auth required, intake completed, NOT approved */}
+      <Route
+        path="/pending"
+        element={
+          <PendingRoute>
+            <PendingApproval />
+          </PendingRoute>
+        }
+      />
+
+      {/* Protected routes - auth required, approved */}
       <Route
         path="/"
         element={
@@ -140,7 +194,7 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Catch all - redirect to dashboard (will handle routing from there) */}
+      {/* Catch all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

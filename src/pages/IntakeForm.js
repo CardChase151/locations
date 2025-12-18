@@ -2,23 +2,35 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from '../context/LocationContext';
 import { useAuth } from '../context/AuthContext';
+import { Store, Clock } from 'lucide-react';
 import logo from '../assets/logo.png';
 
 const IntakeForm = () => {
   const navigate = useNavigate();
-  const { completeIntake } = useLocation();
+  const { submitApplication } = useLocation();
   const { user, signOut } = useAuth();
 
-  const [businessName, setBusinessName] = useState('');
-  const [businessPhone, setBusinessPhone] = useState('');
-  const [businessAddress, setBusinessAddress] = useState('');
+  const [formData, setFormData] = useState({
+    businessName: '',
+    businessPhone: '',
+    businessAddress: '',
+    businessCity: '',
+    businessState: '',
+    businessZip: '',
+    businessWebsite: '',
+    businessDescription: '',
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const handleChange = (field) => (e) => {
+    setFormData(prev => ({ ...prev, [field]: e.target.value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!businessName.trim()) {
+    if (!formData.businessName.trim()) {
       setError('Business name is required');
       return;
     }
@@ -26,17 +38,22 @@ const IntakeForm = () => {
     setLoading(true);
     setError('');
 
-    const { error: submitError } = await completeIntake({
-      businessName: businessName.trim(),
-      businessPhone: businessPhone.trim(),
-      businessAddress: businessAddress.trim(),
+    const { error: submitError } = await submitApplication({
+      businessName: formData.businessName.trim(),
+      businessPhone: formData.businessPhone.trim(),
+      businessAddress: formData.businessAddress.trim(),
+      businessCity: formData.businessCity.trim(),
+      businessState: formData.businessState.trim(),
+      businessZip: formData.businessZip.trim(),
+      businessWebsite: formData.businessWebsite.trim(),
+      businessDescription: formData.businessDescription.trim(),
     });
 
     if (submitError) {
-      setError(submitError.message || 'Failed to save. Please try again.');
+      setError(submitError.message || 'Failed to submit. Please try again.');
       setLoading(false);
     } else {
-      navigate('/');
+      navigate('/pending');
     }
   };
 
@@ -50,58 +67,142 @@ const IntakeForm = () => {
       <div style={styles.content}>
         <div style={styles.header}>
           <img src={logo} alt="CardChase" style={styles.logo} />
-          <h1 style={styles.title}>Location Setup</h1>
-          <p style={styles.subtitle}>Tell us about your business</p>
-          <span style={styles.badge}>Step 1 of 1</span>
+          <h1 style={styles.title}>Partner Application</h1>
+          <p style={styles.subtitle}>Apply to list your store on CardChase</p>
+        </div>
+
+        {/* Info banner */}
+        <div style={styles.infoBanner}>
+          <Clock size={18} style={{ flexShrink: 0 }} />
+          <span>Applications are reviewed in the order received. You'll be notified once approved.</span>
         </div>
 
         <div style={styles.userInfo}>
-          <span style={styles.userLabel}>Signed in as:</span>
+          <span style={styles.userLabel}>Applying as:</span>
           <span style={styles.userEmail}>{user?.email}</span>
         </div>
 
         {error && <div style={styles.error}>{error}</div>}
 
         <form onSubmit={handleSubmit} style={styles.form}>
+          {/* Business Name */}
           <div style={styles.inputGroup}>
             <label style={styles.label}>Business Name *</label>
             <input
               type="text"
               style={styles.input}
               placeholder="Epic Card Games"
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
+              value={formData.businessName}
+              onChange={handleChange('businessName')}
               disabled={loading}
             />
           </div>
 
+          {/* Phone */}
           <div style={styles.inputGroup}>
             <label style={styles.label}>Business Phone</label>
             <input
               type="tel"
               style={styles.input}
               placeholder="(555) 123-4567"
-              value={businessPhone}
-              onChange={(e) => setBusinessPhone(e.target.value)}
+              value={formData.businessPhone}
+              onChange={handleChange('businessPhone')}
               disabled={loading}
             />
           </div>
 
+          {/* Address */}
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Business Address</label>
+            <label style={styles.label}>Street Address</label>
+            <input
+              type="text"
+              style={styles.input}
+              placeholder="123 Main Street"
+              value={formData.businessAddress}
+              onChange={handleChange('businessAddress')}
+              disabled={loading}
+            />
+          </div>
+
+          {/* City, State, Zip row */}
+          <div style={styles.row}>
+            <div style={{ ...styles.inputGroup, flex: 2 }}>
+              <label style={styles.label}>City</label>
+              <input
+                type="text"
+                style={styles.input}
+                placeholder="San Diego"
+                value={formData.businessCity}
+                onChange={handleChange('businessCity')}
+                disabled={loading}
+              />
+            </div>
+            <div style={{ ...styles.inputGroup, flex: 1 }}>
+              <label style={styles.label}>State</label>
+              <input
+                type="text"
+                style={styles.input}
+                placeholder="CA"
+                value={formData.businessState}
+                onChange={handleChange('businessState')}
+                disabled={loading}
+                maxLength={2}
+              />
+            </div>
+            <div style={{ ...styles.inputGroup, flex: 1 }}>
+              <label style={styles.label}>ZIP</label>
+              <input
+                type="text"
+                style={styles.input}
+                placeholder="92101"
+                value={formData.businessZip}
+                onChange={handleChange('businessZip')}
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          {/* Website */}
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Website (optional)</label>
+            <input
+              type="url"
+              style={styles.input}
+              placeholder="https://epiccardgames.com"
+              value={formData.businessWebsite}
+              onChange={handleChange('businessWebsite')}
+              disabled={loading}
+            />
+          </div>
+
+          {/* Description */}
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Tell us about your store (optional)</label>
             <textarea
               style={{ ...styles.input, ...styles.textarea }}
-              placeholder="123 Main St, City, State 12345"
-              value={businessAddress}
-              onChange={(e) => setBusinessAddress(e.target.value)}
+              placeholder="What games do you sell? Do you host events? Anything you'd like us to know..."
+              value={formData.businessDescription}
+              onChange={handleChange('businessDescription')}
               disabled={loading}
-              rows={3}
+              rows={4}
             />
           </div>
 
           <button type="submit" style={styles.submit} disabled={loading}>
-            {loading ? <div style={styles.spinner} /> : 'Complete Setup'}
+            {loading ? (
+              <div style={styles.spinner} />
+            ) : (
+              <>
+                <Store size={18} />
+                <span>Submit Application</span>
+              </>
+            )}
           </button>
+
+          <p style={styles.disclaimer}>
+            By submitting, you agree to be contacted about your application.
+            Your store will appear on CardChase once approved.
+          </p>
         </form>
 
         <button onClick={handleSignOut} style={styles.signOutBtn}>
@@ -117,13 +218,13 @@ const styles = {
     minHeight: '100vh',
     backgroundColor: '#0a0a0a',
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
-    padding: '20px',
+    padding: '40px 20px',
   },
   content: {
     width: '100%',
-    maxWidth: '400px',
+    maxWidth: '480px',
   },
   header: {
     textAlign: 'center',
@@ -147,15 +248,18 @@ const styles = {
     color: '#94a3b8',
     margin: 0,
   },
-  badge: {
-    display: 'inline-block',
-    background: 'rgba(14, 165, 233, 0.15)',
+  infoBanner: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '10px',
+    padding: '12px 14px',
+    backgroundColor: 'rgba(14, 165, 233, 0.1)',
+    border: '1px solid rgba(14, 165, 233, 0.3)',
+    borderRadius: '10px',
     color: '#0ea5e9',
-    fontSize: '11px',
-    fontWeight: '600',
-    padding: '4px 10px',
-    borderRadius: '20px',
-    marginTop: '12px',
+    fontSize: '13px',
+    marginBottom: '16px',
+    lineHeight: '1.4',
   },
   userInfo: {
     display: 'flex',
@@ -190,6 +294,10 @@ const styles = {
     flexDirection: 'column',
     gap: '14px',
   },
+  row: {
+    display: 'flex',
+    gap: '10px',
+  },
   inputGroup: {
     display: 'flex',
     flexDirection: 'column',
@@ -214,11 +322,11 @@ const styles = {
   },
   textarea: {
     resize: 'vertical',
-    minHeight: '80px',
+    minHeight: '100px',
   },
   submit: {
     width: '100%',
-    padding: '12px 16px',
+    padding: '14px 16px',
     backgroundColor: '#0ea5e9',
     border: 'none',
     borderRadius: '10px',
@@ -226,10 +334,11 @@ const styles = {
     fontSize: '15px',
     fontWeight: '600',
     cursor: 'pointer',
-    marginTop: '6px',
+    marginTop: '8px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: '8px',
   },
   spinner: {
     width: '18px',
@@ -238,6 +347,13 @@ const styles = {
     borderTopColor: 'white',
     borderRadius: '50%',
     animation: 'spin 0.8s linear infinite',
+  },
+  disclaimer: {
+    fontSize: '12px',
+    color: '#6a6a6a',
+    textAlign: 'center',
+    lineHeight: '1.5',
+    marginTop: '4px',
   },
   signOutBtn: {
     width: '100%',
@@ -248,7 +364,7 @@ const styles = {
     color: '#6a6a6a',
     fontSize: '13px',
     cursor: 'pointer',
-    marginTop: '16px',
+    marginTop: '20px',
   },
 };
 

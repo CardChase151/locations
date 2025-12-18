@@ -29,12 +29,23 @@ export const LocationProvider = ({ children }) => {
           last_name,
           is_location,
           location_intake_completed,
+          location_request_submitted_at,
+          location_request_updated_at,
           location_approved,
+          location_approved_at,
+          location_rejected,
+          location_rejected_at,
+          location_rejection_reason,
           location_contract_agreed,
           location_contract_agreed_at,
           location_business_name,
           location_business_phone,
           location_business_address,
+          location_business_city,
+          location_business_state,
+          location_business_zip,
+          location_business_website,
+          location_business_description,
           location_subscription_tier,
           location_data
         `)
@@ -57,12 +68,19 @@ export const LocationProvider = ({ children }) => {
     fetchLocationProfile();
   }, [fetchLocationProfile]);
 
-  // Check if user needs to complete intake
+  // Status checks
   const needsIntake = !locationProfile?.location_intake_completed;
+  const isPending = locationProfile?.location_intake_completed &&
+                    !locationProfile?.location_approved &&
+                    !locationProfile?.location_rejected;
+  const isApproved = locationProfile?.location_approved === true;
+  const isRejected = locationProfile?.location_rejected === true;
 
-  // Update location profile after intake
-  const completeIntake = async (intakeData) => {
+  // Submit initial application
+  const submitApplication = async (applicationData) => {
     if (!user?.id) return { error: 'No user' };
+
+    const now = new Date().toISOString();
 
     const { error } = await supabase
       .from('users')
@@ -71,11 +89,46 @@ export const LocationProvider = ({ children }) => {
         email: user.email,
         is_location: true,
         location_intake_completed: true,
-        location_business_name: intakeData.businessName,
-        location_business_phone: intakeData.businessPhone,
-        location_business_address: intakeData.businessAddress,
+        location_request_submitted_at: now,
+        location_request_updated_at: now,
+        location_approved: false,
+        location_rejected: false,
+        location_business_name: applicationData.businessName,
+        location_business_phone: applicationData.businessPhone,
+        location_business_address: applicationData.businessAddress,
+        location_business_city: applicationData.businessCity,
+        location_business_state: applicationData.businessState,
+        location_business_zip: applicationData.businessZip,
+        location_business_website: applicationData.businessWebsite,
+        location_business_description: applicationData.businessDescription,
         location_subscription_tier: 'free',
       }, { onConflict: 'auth_id' });
+
+    if (!error) {
+      await fetchLocationProfile();
+    }
+
+    return { error };
+  };
+
+  // Update existing application (doesn't change submitted_at)
+  const updateApplication = async (applicationData) => {
+    if (!user?.id) return { error: 'No user' };
+
+    const { error } = await supabase
+      .from('users')
+      .update({
+        location_request_updated_at: new Date().toISOString(),
+        location_business_name: applicationData.businessName,
+        location_business_phone: applicationData.businessPhone,
+        location_business_address: applicationData.businessAddress,
+        location_business_city: applicationData.businessCity,
+        location_business_state: applicationData.businessState,
+        location_business_zip: applicationData.businessZip,
+        location_business_website: applicationData.businessWebsite,
+        location_business_description: applicationData.businessDescription,
+      })
+      .eq('auth_id', user.id);
 
     if (!error) {
       await fetchLocationProfile();
@@ -87,8 +140,14 @@ export const LocationProvider = ({ children }) => {
   const value = {
     locationProfile,
     loading,
+    // Status flags
     needsIntake,
-    completeIntake,
+    isPending,
+    isApproved,
+    isRejected,
+    // Actions
+    submitApplication,
+    updateApplication,
     refreshProfile: fetchLocationProfile,
   };
 
