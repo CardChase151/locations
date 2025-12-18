@@ -48,6 +48,7 @@ const SignUp = () => {
     }
 
     // Set location-specific fields (doesn't touch app fields)
+    // Uses ONLY location_* fields so app intake/contract fields stay intact
     if (data?.user) {
       const { error: upsertError } = await supabase
         .from('users')
@@ -58,6 +59,7 @@ const SignUp = () => {
           location_intake_completed: false,
           location_approved: false,
           location_contract_agreed: false,
+          location_subscription_tier: 'free',
         }, { onConflict: 'auth_id' });
 
       if (upsertError) {
