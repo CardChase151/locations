@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from '../context/LocationContext';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import { Store, Clock } from 'lucide-react';
 import logo from '../assets/logo.png';
 
@@ -20,8 +21,23 @@ const IntakeForm = () => {
     businessWebsite: '',
     businessDescription: '',
   });
+  const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Fetch user's name from database
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from('users')
+        .select('first_name, last_name')
+        .eq('auth_id', user.id)
+        .single();
+      setUserInfo(data);
+    };
+    fetchUserInfo();
+  }, [user?.id]);
 
   const handleChange = (field) => (e) => {
     setFormData(prev => ({ ...prev, [field]: e.target.value }));
@@ -79,7 +95,14 @@ const IntakeForm = () => {
 
         <div style={styles.userInfo}>
           <span style={styles.userLabel}>Applying as:</span>
-          <span style={styles.userEmail}>{user?.email}</span>
+          <div style={styles.userDetails}>
+            {userInfo?.first_name && (
+              <span style={styles.userName}>
+                {userInfo.first_name} {userInfo.last_name || ''}
+              </span>
+            )}
+            <span style={styles.userEmail}>{user?.email}</span>
+          </div>
         </div>
 
         {error && <div style={styles.error}>{error}</div>}
@@ -265,9 +288,9 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '8px',
+    gap: '10px',
     marginBottom: '20px',
-    padding: '10px',
+    padding: '12px 14px',
     backgroundColor: '#1a1a1a',
     borderRadius: '8px',
   },
@@ -275,10 +298,19 @@ const styles = {
     fontSize: '13px',
     color: '#6a6a6a',
   },
+  userDetails: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+  },
+  userName: {
+    fontSize: '14px',
+    color: '#ffffff',
+    fontWeight: '600',
+  },
   userEmail: {
     fontSize: '13px',
     color: '#94a3b8',
-    fontWeight: '500',
   },
   error: {
     backgroundColor: 'rgba(239, 68, 68, 0.1)',

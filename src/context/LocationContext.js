@@ -62,9 +62,11 @@ export const LocationProvider = ({ children }) => {
   }, [fetchData]);
 
   // Status checks
+  // application_approved = can access dashboard (admin approved after Zoom)
+  // verified = shows on CardChase app (after they add hours, content, tier)
   const needsIntake = !locationRecord; // No location record = needs to submit application
-  const isPending = locationRecord && !locationRecord.verified;
-  const isApproved = locationRecord?.verified === true;
+  const isPending = locationRecord && !locationRecord.application_approved;
+  const isApproved = locationRecord?.application_approved === true;
 
   // Submit initial application - creates record in locations table
   const submitApplication = async (applicationData) => {

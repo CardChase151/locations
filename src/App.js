@@ -6,6 +6,14 @@ import SignUp from './pages/auth/SignUp';
 import Dashboard from './pages/Dashboard';
 import IntakeForm from './pages/IntakeForm';
 import PendingApproval from './pages/PendingApproval';
+import Admin from './pages/Admin';
+import LocationInfo from './pages/LocationInfo';
+import BusinessInfo from './pages/BusinessInfo';
+import AddressInfo from './pages/AddressInfo';
+import OperatingHours from './pages/OperatingHours';
+import UpgradePlan from './pages/UpgradePlan';
+import ManageStaff from './pages/ManageStaff';
+import Schedule from './pages/Schedule';
 
 // Loading spinner component
 const LoadingScreen = () => (
@@ -193,6 +201,65 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/info"
+        element={
+          <ProtectedRoute>
+            <LocationInfo />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/info/business"
+        element={
+          <ProtectedRoute>
+            <BusinessInfo />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/info/address"
+        element={
+          <ProtectedRoute>
+            <AddressInfo />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hours"
+        element={
+          <ProtectedRoute>
+            <OperatingHours />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/upgrade"
+        element={
+          <ProtectedRoute>
+            <UpgradePlan />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/staff"
+        element={
+          <ProtectedRoute>
+            <ManageStaff />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/schedule"
+        element={
+          <ProtectedRoute>
+            <Schedule />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Admin route - handles its own auth check */}
+      <Route path="/admin" element={<Admin />} />
 
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/" replace />} />
