@@ -22,17 +22,10 @@ const ManageStaff = () => {
   // Get current user's staff record to check permissions
   const [myStaffRecord, setMyStaffRecord] = useState(null);
 
-  useEffect(() => {
-    if (locationRecord?.id) {
-      fetchStaff();
-      fetchMyStaffRecord();
-    }
-  }, [locationRecord?.id]);
-
   const fetchMyStaffRecord = async () => {
     if (!user?.id || !locationRecord?.id) return;
 
-    const { data } = await supabase
+    await supabase
       .from('location_staff')
       .select('role, can_add_staff')
       .eq('location_id', locationRecord.id)
@@ -89,6 +82,14 @@ const ManageStaff = () => {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (locationRecord?.id) {
+      fetchStaff();
+      fetchMyStaffRecord();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationRecord?.id]);
 
   const searchUsers = async (query) => {
     if (!query.trim() || query.length < 2) {

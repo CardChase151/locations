@@ -95,7 +95,7 @@ const IntakeRoute = ({ children }) => {
 // Pending Route - requires auth AND completed intake but NOT approved
 const PendingRoute = ({ children }) => {
   const { user, loading: authLoading } = useAuth();
-  const { needsIntake, isPending, isApproved, loading: locationLoading } = useLocation();
+  const { needsIntake, isApproved, loading: locationLoading } = useLocation();
 
   if (authLoading || locationLoading) {
     return <LoadingScreen />;

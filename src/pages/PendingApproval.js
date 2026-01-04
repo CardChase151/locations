@@ -7,7 +7,7 @@ import logo from '../assets/logo.png';
 
 const PendingApproval = () => {
   const navigate = useNavigate();
-  const { locationRecord, updateApplication, refreshData } = useLocation();
+  const { locationRecord, updateApplication } = useLocation();
   const { signOut } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);

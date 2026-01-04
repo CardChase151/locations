@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLocation } from '../context/LocationContext';
 import { supabase } from '../lib/supabase';
 import {
-  ChevronLeft, ChevronRight, Calendar, X, AlertTriangle,
+  ChevronLeft, ChevronRight, X, AlertTriangle,
   Clock, Ban
 } from 'lucide-react';
 
