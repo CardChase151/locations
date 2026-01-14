@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from '../context/LocationContext';
 import { supabase } from '../lib/supabase';
-import { ChevronLeft, Clock, CreditCard, Users, Store, MapPin, ChevronRight, Eye } from 'lucide-react';
+import { ChevronLeft, Clock, CreditCard, Users, Store, MapPin, ChevronRight, Eye, Calendar } from 'lucide-react';
 
 const LocationInfo = () => {
   const navigate = useNavigate();
@@ -40,6 +40,13 @@ const LocationInfo = () => {
 
   const settingsItems = [
     {
+      icon: Calendar,
+      title: 'Weekly Events',
+      subtitle: 'Trade nights, tournaments, card shows',
+      path: '/events',
+      color: '#8b5cf6',
+    },
+    {
       icon: Clock,
       title: 'Operating Hours',
       subtitle: 'Set your weekly schedule',
@@ -51,7 +58,7 @@ const LocationInfo = () => {
       title: 'Subscription Plan',
       subtitle: 'View or upgrade your plan',
       path: '/upgrade',
-      color: '#8b5cf6',
+      color: '#f59e0b',
     },
     {
       icon: Users,

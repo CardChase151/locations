@@ -14,6 +14,7 @@ import OperatingHours from './pages/OperatingHours';
 import UpgradePlan from './pages/UpgradePlan';
 import ManageStaff from './pages/ManageStaff';
 import Schedule from './pages/Schedule';
+import WeeklyEvents from './pages/WeeklyEvents';
 
 // Loading spinner component
 const LoadingScreen = () => (
@@ -254,6 +255,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Schedule />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/events"
+        element={
+          <ProtectedRoute>
+            <WeeklyEvents />
           </ProtectedRoute>
         }
       />
